@@ -345,6 +345,73 @@
             background: #333;
         }
 
+        .contact-section {
+            padding: 32px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .contact-section h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            text-align: center;
+        }
+
+        .contact-section > p {
+            text-align: center;
+        }
+
+        .contact-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .form-field {
+            margin-bottom: 20px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-field input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-field input:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        .form-field input::placeholder {
+            color: #999;
+        }
+
+        .cta-button-full {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .form-note {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 12px;
+            line-height: 1.5;
+        }
+
         .ccc-mention {
             text-align: center;
             padding: 20px;
@@ -646,9 +713,56 @@
 
             <div class="recommendation-box" id="recommendationBox"></div>
 
-            <div class="cta-section">
-                <h3>Would you like help solving this constraint?</h3>
-                <a href="https://yourbookinglink.com" class="cta-button" target="_blank">Book a Strategy Session</a>
+            <div class="contact-section">
+                <h3>Want help solving this constraint?</h3>
+                <p style="margin-bottom: 20px; color: #555; font-size: 15px;">
+                    Get personalized guidance on addressing your biggest bottleneck.
+                </p>
+                
+                <div class="contact-form">
+                    <div class="form-field">
+                        <label for="contactName">Name *</label>
+                        <input 
+                            type="text" 
+                            id="contactName" 
+                            placeholder="Your name"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="contactEmail">Email *</label>
+                        <input 
+                            type="email" 
+                            id="contactEmail" 
+                            placeholder="you@example.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="contactBusiness">Business Name (Optional)</label>
+                        <input 
+                            type="text" 
+                            id="contactBusiness" 
+                            placeholder="Your business name"
+                        >
+                    </div>
+                    
+                    <button class="button cta-button-full" id="submitContactBtn">
+                        Book Strategy Session
+                    </button>
+                    
+                    <p class="form-note">
+                        * Required fields. Your information will be used only to follow up on your diagnostic results.
+                    </p>
+                </div>
+            </div>
+
+            <div class="cta-section" style="display: none;" id="ctaConfirmation">
+                <h3>✓ Thank you!</h3>
+                <p style="margin-bottom: 16px;">Opening your booking page...</p>
+                <a href="https://yourbookinglink.com" class="cta-button" target="_blank">Book Strategy Session</a>
             </div>
 
             <div class="ccc-mention">
@@ -731,6 +845,13 @@
             // Navigation buttons
             document.getElementById('nextBtn').addEventListener('click', nextSection);
             document.getElementById('backBtn').addEventListener('click', previousSection);
+
+            // Contact form submission (will be attached after results are shown)
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'submitContactBtn') {
+                    submitContactForm();
+                }
+            });
         }
 
         // ===== NAVIGATION LOGIC =====
@@ -892,39 +1013,112 @@
         }
 
         // ===== FORMSPREE TRACKING =====
-        async function trackCompletion(scores, bottleneck) {
+        async function trackCompletion(scores, bottleneck, contactInfo = null) {
             try {
+                const payload = {
+                    timestamp: new Date().toISOString(),
+                    // All answers
+                    f1: answers.f1,
+                    f2: answers.f2,
+                    o1: answers.o1,
+                    o2: answers.o2,
+                    c1: answers.c1,
+                    c2: answers.c2,
+                    u1: answers.u1,
+                    u2: answers.u2,
+                    s1: answers.s1,
+                    s2: answers.s2,
+                    // Calculated scores
+                    founderVisionScore: scores['Founder Vision'],
+                    offerClarityScore: scores['Offer Clarity'],
+                    customerAcquisitionScore: scores['Customer Acquisition'],
+                    unitEconomicsScore: scores['Unit Economics'],
+                    systemsScalabilityScore: scores['Systems & Scalability'],
+                    // Primary bottleneck
+                    primaryBottleneck: bottleneck
+                };
+
+                // Add contact info if provided
+                if (contactInfo) {
+                    payload.contactName = contactInfo.name;
+                    payload.contactEmail = contactInfo.email;
+                    payload.contactBusiness = contactInfo.business || 'Not provided';
+                }
+
                 await fetch('https://formspree.io/f/mjgagvyb', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        timestamp: new Date().toISOString(),
-                        // All answers
-                        f1: answers.f1,
-                        f2: answers.f2,
-                        o1: answers.o1,
-                        o2: answers.o2,
-                        c1: answers.c1,
-                        c2: answers.c2,
-                        u1: answers.u1,
-                        u2: answers.u2,
-                        s1: answers.s1,
-                        s2: answers.s2,
-                        // Calculated scores
-                        founderVisionScore: scores['Founder Vision'],
-                        offerClarityScore: scores['Offer Clarity'],
-                        customerAcquisitionScore: scores['Customer Acquisition'],
-                        unitEconomicsScore: scores['Unit Economics'],
-                        systemsScalabilityScore: scores['Systems & Scalability'],
-                        // Primary bottleneck
-                        primaryBottleneck: bottleneck
-                    })
+                    body: JSON.stringify(payload)
                 });
             } catch (error) {
                 console.log('Tracking error:', error);
             }
+        }
+
+        // ===== CONTACT FORM SUBMISSION =====
+        function submitContactForm() {
+            const name = document.getElementById('contactName').value.trim();
+            const email = document.getElementById('contactEmail').value.trim();
+            const business = document.getElementById('contactBusiness').value.trim();
+
+            // Validate required fields
+            if (!name) {
+                alert('Please enter your name');
+                document.getElementById('contactName').focus();
+                return;
+            }
+
+            if (!email) {
+                alert('Please enter your email');
+                document.getElementById('contactEmail').focus();
+                return;
+            }
+
+            // Basic email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                document.getElementById('contactEmail').focus();
+                return;
+            }
+
+            // Get scores and bottleneck
+            const scores = {
+                'Founder Vision': answers.f1 + answers.f2,
+                'Offer Clarity': answers.o1 + answers.o2,
+                'Customer Acquisition': answers.c1 + answers.c2,
+                'Unit Economics': answers.u1 + answers.u2,
+                'Systems & Scalability': answers.s1 + answers.s2
+            };
+
+            let bottleneck = null;
+            let lowestScore = Infinity;
+            for (let category in scores) {
+                if (scores[category] < lowestScore) {
+                    lowestScore = scores[category];
+                    bottleneck = category;
+                }
+            }
+
+            // Submit to Formspree with contact info
+            const contactInfo = {
+                name: name,
+                email: email,
+                business: business
+            };
+
+            trackCompletion(scores, bottleneck, contactInfo);
+
+            // Show confirmation and open booking link
+            document.querySelector('.contact-section').style.display = 'none';
+            document.getElementById('ctaConfirmation').style.display = 'block';
+            
+            // Open booking link in new tab
+            setTimeout(() => {
+                window.open('https://yourbookinglink.com', '_blank');
+            }, 500);
         }
 
         // ===== EMAIL RESULTS FUNCTION =====
